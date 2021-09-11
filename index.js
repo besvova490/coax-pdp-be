@@ -1,0 +1,22 @@
+const express = require("express");
+
+//routes
+const authRouter = require("./routes/auth");
+const booksRouter = require("./routes/books");
+
+require("dotenv").config()
+
+const app = express();
+
+app.use(express.json());
+
+app.use("/auth", authRouter);
+app.use("/books", booksRouter);
+
+app.use((error, req, res, next) => {
+  if (res.headerSent) return next(error);
+  
+  res.status(error.code || 500).json({ msg: e.message || "Internet server error" })
+});
+
+app.listen(process.env.EXPRESS_APP_PORT, () => console.log(`Server started at ${process.env.EXPRESS_APP_PORT} port`));
