@@ -3,6 +3,7 @@ const express = require("express");
 //routes
 const authRouter = require("./routes/auth");
 const booksRouter = require("./routes/books");
+const categoriesRouter = require("./routes/categories");
 
 require("dotenv").config()
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use("/auth", authRouter);
 app.use("/books", booksRouter);
+app.use("/categories", categoriesRouter);
 
 app.use((error, req, res, next) => {
   if (res.headerSent) return next(error);
