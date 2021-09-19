@@ -4,6 +4,7 @@ const express = require("express");
 const authRouter = require("./routes/auth");
 const booksRouter = require("./routes/books");
 const categoriesRouter = require("./routes/categories");
+const authorsRouter = require("./routes/author");
 
 require("dotenv").config()
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/books", booksRouter);
 app.use("/categories", categoriesRouter);
+app.use("/authors", authorsRouter);
 
 app.use((error, req, res, next) => {
   if (res.headerSent) return next(error);

@@ -23,9 +23,9 @@ booksRouter.get("/", async(req, res) => {
 booksRouter.get("/:bookId", async(req, res) => {
   try {
     const { bookId } = req.params
-    const checkIfBookExist = await books.checkIfBookExist(bookId);
+    const book = await books.getBookById(bookId);
 
-    if (!checkIfBookExist) return res.status(404).json({ msg: "Book not found" });
+    if (!book) return res.status(404).json({ msg: "Book not found" });
 
     res.status(200).json({ ...book });
   } catch(e) {
@@ -92,7 +92,7 @@ booksRouter.put("/:bookId", async (req, res) => {
 
 booksRouter.delete("/:bookId", async (req, res) => {
   try {
-    const { bookId } = req.params
+    const { bookId } = req.params;
     const checkIfBookExist = await books.checkIfBookExist(bookId);
     if (!checkIfBookExist) return res.status(404).json({ msg: "Book not exist" });
 

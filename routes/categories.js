@@ -1,25 +1,75 @@
 const { Router } = require("express");
 
 const DB = require("../services/db");
-const category = require("../models/categories");
+const middleware = require("../middleware/validation");
+const schemas = require("../schemas/category");
+const categories = require("../models/categories");
 
 const categotiesRouter = Router();
 
+
 categotiesRouter.get("/", async (req, res) => {
+  try {
+    const categoriesList = await categories.getCategoriesList();
 
-  const categories = await category.getCategoriesList();
-
-  res.status(200).json({ categories });
+    res.status(200).json({ categoriesList });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
 });
 
-categotiesRouter.patch("/", async (req, res) => {
-  const { title } = req.body;
+categotiesRouter.get("/:categoryId", async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const category = await categories.getCategoryById(categoryId);
+    if(!category) return res.status(404).json({ msg: `Category '${categoryId}' not found` });
 
-  if(await category.checkIfExist(title)) return res.status(400).json({ msg: `Such canegory '${title}' already exist` });
+    res.status(200).json({ ...category });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
+});
 
-  const newCategory = await category.createCategory(title);
+categotiesRouter.post("/", async (req, res) => {
+  try {
+    const { title } = req.body;
+    const checkIfExist = await categories.checkIfExist(title);
+    if(!checkIfExist) return res.status(404).json({ msg: `Category '${title}' not found` });
 
-  res.status(201).json({ ...newCategory });
+    const category = await categories.getCategoryByTitle(title);
+
+    res.status(200).json({ ...category });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
+});
+
+categotiesRouter.patch("/",  middleware(schemas.categoryPatch, "body"),async (req, res) => {
+  try {
+    const { title } = req.body;
+    const checkIfExist = await categories.checkIfExist(title);
+    if(checkIfExist) return res.status(400).json({ msg: `Such canegory '${title}' already exist` });
+  
+    const newCategory = await categories.createCategory(title);
+  
+    res.status(201).json({ ...newCategory });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
+});
+
+categotiesRouter.delete("/:categoryId", async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    const checkIfExist = await categories.checkIfExistById(categoryId);
+    if(!checkIfExist) return res.status(404).json({ msg: `Category '${categoryId}' not found` });
+
+
+    await categories.deleteCategory(categoryId);
+    res.sendStatus(204);
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
 });
 
 module.exports = categotiesRouter;

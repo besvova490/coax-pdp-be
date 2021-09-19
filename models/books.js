@@ -1,5 +1,7 @@
 const DB = require("../services/db");
 const categories = require("./categories");
+const authors = require("./author");
+
 
 const model = {
   createBook: async fields => {
@@ -19,9 +21,11 @@ const model = {
   },
   getBooksList: async ({ maxResults = 20, sortBy = "book_id", startIndex = 0 }) => {
     const books = await DB("Books")
-    .select("Books.*", "Categories.title as categoryTitle")
+    .select("Books.*", "Categories.title as categoryTitle", "Authors.name as authorName")
     .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.book_id")
     .leftJoin("Categories", "Books_Categories.category_id", "Categories.category_id")
+    .leftJoin("Books_Authors", "Books_Authors.book_id", "Books.book_id")
+    .leftJoin("Authors", "Books_Authors.author_id", "Authors.author_id")
     .limit(maxResults <= 100 ? maxResults : 100)
     .offset(startIndex)
     .orderBy(sortBy);
@@ -46,17 +50,25 @@ const model = {
       if (!memo.categories) {
         memo.categories = [];
       }
+      if (!memo.authors) {
+        memo.authors = [];
+      }
       if (!memo.categories.includes(categoryEntry.categoryTitle) && categoryEntry.categoryTitle) {
         memo.categories.push(categoryEntry.categoryTitle);
+      }
+      if (!memo.authors.includes(categoryEntry.authorName) && categoryEntry.authorName) {
+        memo.authors.push(categoryEntry.authorName);
       }
       return memo;
     }, {}));
   },
   getBookById: async bookId => {
     const book = await DB("Books")
-    .select("Books.*", "Categories.title as categoryTitle")
+    .select("Books.*", "Categories.title as categoryTitle", "Authors.name as authorName")
     .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.book_id")
     .leftJoin("Categories", "Books_Categories.category_id", "Categories.category_id")
+    .leftJoin("Books_Authors", "Books_Authors.book_id", "Books.book_id")
+    .leftJoin("Authors", "Books_Authors.author_id", "Authors.author_id")
     .where("Books.book_id", bookId);
 
     return book.reduce((memo, categoryEntry) => {
@@ -66,8 +78,14 @@ const model = {
       if (!memo.categories) {
         memo.categories = [];
       }
+      if (!memo.authors) {
+        memo.authors = [];
+      }
       if (!memo.categories.includes(categoryEntry.categoryTitle) && categoryEntry.categoryTitle) {
         memo.categories.push(categoryEntry.categoryTitle);
+      }
+      if (!memo.authors.includes(categoryEntry.authorName) && categoryEntry.authorName) {
+        memo.authors.push(categoryEntry.authorName);
       }
       return memo;
     }, {});
@@ -81,7 +99,7 @@ const model = {
     }));
   },
   updateBook: async bookFields => {
-    const keysBlackList = ["id", "categories"];
+    const keysBlackList = ["id", "categories", "authors"];
 
     const filteredFields = Object.keys(bookFields)
     .filter(key => !keysBlackList.includes(key))
@@ -103,19 +121,29 @@ const model = {
       Promise.all(newCategories.map(async (category) => {
         return DB("Books_Categories").insert({ book_id: bookFields.id, category_id: category.category_id }).returning("*");
       }));
+    }
 
+    if (bookFields.authors) {
+      const authorsList = await authors.getAuthorsByName(bookFields.authors);
+      const allAuthorBooks = await DB("Books_Authors").select().where({ book_id: bookFields.id });
+
+      const oldAuthors = allAuthorBooks.filter(author => !authorsList.some(item => author.author_id === item.author_id));
+      const newAuthors = authorsList.filter(author => !allAuthorBooks.some(item => author.author_id === item.author_id));
+
+      await DB("Books_Authors").delete().whereIn("book_author_id", oldAuthors.map(item => item.book_author_id));
+
+      Promise.all(newAuthors.map(async (author) => {
+        return DB("Books_Authors").insert({ book_id: bookFields.id, author_id: author.author_id }).returning("*");
+      }));
+    }
+
+    if (Object.keys(filteredFields).length) {
       const [result] = await DB("Books").update({
         ...filteredFields
       }).where({ book_id: bookFields.id }).returning("*");
-
+  
       return result;
     }
-
-    const [result] = await DB("Books").update({
-      ...filteredFields
-    }).where({ book_id: bookFields.id }).returning("*");
-
-    return result;
   },
   deleteBook: async bookId => {
     const allBookCategories = await DB("Books_Categories").select().where({ book_id: bookId });
