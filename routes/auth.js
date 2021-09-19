@@ -9,7 +9,7 @@ const schemas = require("../schemas/auth");
 
 const authRouter = Router();
 
-require("dotenv").config()
+require("dotenv").config();
 
 
 authRouter.post("/login/", middleware(schemas.loginPost, "body"), async (req, res) => {
