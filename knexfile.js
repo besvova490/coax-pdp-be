@@ -22,6 +22,7 @@ module.exports = {
       database: process.env.EXPRESS_APP_DB_NAME,
       password: process.env.EXPRESS_APP_DB_USER_PASSWORD,
       port: process.env.EXPRESS_APP_DB_PORT,
+      ssl: { rejectUnauthorized: false }
     }
   },
 
