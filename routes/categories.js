@@ -1,6 +1,6 @@
 const { Router } = require("express");
 
-const DB = require("../services/db");
+const { DB } = require("../services/db");
 const middleware = require("../middleware/validation");
 const schemas = require("../schemas/category");
 const categories = require("../models/categories");
@@ -10,7 +10,8 @@ const categotiesRouter = Router();
 
 categotiesRouter.get("/", async (req, res) => {
   try {
-    const categoriesList = await categories.getCategoriesList();
+    const { maxResults = 20, sortBy = "category_id", startIndex = 0 } = req.query;
+    const categoriesList = await categories.getCategoriesList({ maxResults, sortBy, startIndex });
 
     res.status(200).json({ categoriesList });
   } catch (e) {
@@ -44,7 +45,7 @@ categotiesRouter.post("/", async (req, res) => {
   }
 });
 
-categotiesRouter.patch("/",  middleware(schemas.categoryPatch, "body"),async (req, res) => {
+categotiesRouter.post("/create-category",  middleware(schemas.categoryPost, "body"), async (req, res) => {
   try {
     const { title } = req.body;
     const checkIfExist = await categories.checkIfExist(title);

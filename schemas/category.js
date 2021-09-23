@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const schemas = {
-  categoryPatch: Joi.object({
+  categoryPost: Joi.object({
     title: Joi.string().min(3).trim().required(),
   }),
 };

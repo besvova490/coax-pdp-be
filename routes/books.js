@@ -33,7 +33,7 @@ booksRouter.get("/:bookId", async(req, res) => {
   }
 });
 
-booksRouter.patch("/", middleware(schemas.bookPatch, "body"), async (req, res) => {
+booksRouter.post("/", middleware(schemas.bookPost, "body"), async (req, res) => {
   try {
     const {
       title,
@@ -43,6 +43,7 @@ booksRouter.patch("/", middleware(schemas.bookPatch, "body"), async (req, res) =
       shortDescription,
       publisher,
       publishedDate,
+      authors,
       categories,
       thumbnailLink,
       previewLink,
@@ -54,7 +55,7 @@ booksRouter.patch("/", middleware(schemas.bookPatch, "body"), async (req, res) =
     const isBookExist = await DB("Books").select().first().where({ title });
     if (isBookExist) return res.status(400).json({ msg: `Book with such title '${title} already exist'` })
 
-    const book = books.createBookWithCategories({
+    const book = books.createBook({
       title,
       description,
       amount,
@@ -67,7 +68,7 @@ booksRouter.patch("/", middleware(schemas.bookPatch, "body"), async (req, res) =
       language,
       discount,
       pageCount,
-    }, categories);
+    }, { authors, categories});
 
     res.status(202).json({ msg: "New book has been created", book });
   } catch (e) {

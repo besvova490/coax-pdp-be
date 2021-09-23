@@ -1,11 +1,25 @@
 const DB = require("../services/db");
-const categories = require("./categories");
-const authors = require("./author");
+const categoriesModel = require("./categories");
+const authorsModel = require("./author");
 
 
 const model = {
-  createBook: async fields => {
+  createBook: async (fields, { categories, authors }) => {
     const [book] = await DB("Books").insert({ ...fields }).returning("*");
+
+    if (categories) {
+      const categoriesList = await categoriesModel.getCategoryByTitlesList(categories);
+      Promise.all(categoriesList.map(async (category) => {
+        return DB("Books_Categories").insert({ book_id: book.book_id, category_id: category.category_id }).returning("*");
+      }));
+    }
+
+    if (authors) {
+      const authorsList = await authorsModel.getAuthorsByName(authors);
+      Promise.all(authorsList.map(async (author) => {
+        return DB("Books_Authors").insert({ book_id: book.book_id, author_id: author.author_id }).returning("*");
+      }));
+    }
     
     return book; 
   },
@@ -90,14 +104,6 @@ const model = {
       return memo;
     }, {});
   },
-  createBookWithCategories: async (bookFields, categoryTitles) => {
-    const categoriesList = await categories.getCategoryByTitlesList(categoryTitles);
-    const [createdBook] = await DB("Books").insert({ ...bookFields }).returning("*");
-
-    return Promise.all(categoriesList.map(category => {
-      return DB("Books_Categories").insert({ book_id: createdBook.book_id, category_id: category.category_id }).returning("*");
-    }));
-  },
   updateBook: async bookFields => {
     const keysBlackList = ["id", "categories", "authors"];
 
@@ -110,7 +116,7 @@ const model = {
   
 
     if (bookFields.categories) {
-      const categoriesList = await categories.getCategoryByTitlesList(bookFields.categories);
+      const categoriesList = await categoriesModel.getCategoryByTitlesList(bookFields.categories);
       const allBookCategories = await DB("Books_Categories").select().where({ book_id: bookFields.id });
 
       const oldCategories = allBookCategories.filter(category => !categoriesList.some(item => category.category_id === item.category_id));
@@ -124,7 +130,7 @@ const model = {
     }
 
     if (bookFields.authors) {
-      const authorsList = await authors.getAuthorsByName(bookFields.authors);
+      const authorsList = await authorsModel.getAuthorsByName(bookFields.authors);
       const allAuthorBooks = await DB("Books_Authors").select().where({ book_id: bookFields.id });
 
       const oldAuthors = allAuthorBooks.filter(author => !authorsList.some(item => author.author_id === item.author_id));

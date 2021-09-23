@@ -45,7 +45,7 @@ authorsRouter.post("/", async (req, res) => {
   }
 });
 
-authorsRouter.patch("/", middleware(schemas.authorPatch, "body"), async (req, res) => {
+authorsRouter.post("/create-author", middleware(schemas.authorPost, "body"), async (req, res) => {
   try {
     const { name, description, birthPlace, birthDate } = req.body;
 
