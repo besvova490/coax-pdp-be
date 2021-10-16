@@ -10,10 +10,10 @@ const categotiesRouter = Router();
 
 categotiesRouter.get("/", async (req, res) => {
   try {
-    const { maxResults = 20, sortBy = "category_id", startIndex = 0 } = req.query;
-    const categoriesList = await categories.getCategoriesList({ maxResults, sortBy, startIndex });
+    const { maxResults = 20, sortBy = "id", startIndex = 0, withoutPagination } = req.query;
+    const categoriesResp = await categories.getCategoriesList({ maxResults, sortBy, startIndex, withoutPagination });
 
-    res.status(200).json({ categoriesList });
+    res.status(200).json({ ...categoriesResp });
   } catch (e) {
     res.status(500).json({ msg: e.message || "Internet server error" });
   }

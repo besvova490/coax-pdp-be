@@ -10,6 +10,7 @@ const model = {
   },
   getAuthorsList: async ({ maxResults = 20, sortBy = "author_id", startIndex = 0 }) => {
     return await DB("Authors")
+    .select("*", DB("Books_Authors").whereRaw("?? = ??", ["Authors.author_id", "author_id"]).count("*").as("booksCounter"))
     .limit(maxResults <= 100 ? maxResults : 100)
     .offset(startIndex)
     .orderBy(sortBy);

@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "turing-energy-315118",
+  "private_key_id": "d6c311ae10ed48395b9b7b5028d9f24136b1849c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC3xRR+uroENsMQ\nZ8HJIY9WY2o/wOXz7pV7BKftPsPQj0/JhbZC7SPisAVQ934wb3dI5bHyQioL5sks\npZX9Wh6kNPRocLWWSK/DDcaq8OmLNWC/ZGEfyYyC+OuUPqPF9/TLah4phqufdimI\nz35ZOEzaE0+mGDpD+FKaeKjuJITnrcjO+OJNxNo+AL/qHsLV0fkOCGbnilfTTlVR\nmzovnq8yb25keW9UhVO73T0CHXEBmUsygzqSAQF1KGZzpn2aKLXdesZMBvCsqMnH\nrhrCW4Ukw9rTPWqT8tbx/f0cmS0MQKVedgmcev62aqmzF7u4ho9LYkELBkkaDuOx\nhQyhUkEXAgMBAAECggEAChELrF2CLxTo3o8weFoURgEwIsnoTtJ08cYxhLd5doVD\nM6DVeRkQbCyEPgkwqmqQuDeM5d5l+zzrLDzt2HEFWK1l7gquh8r3hdHNXjPQN0X3\nRMS05U7fGZWVIgvEYOXSTQpFGLU91YBdihcDrtN8sj14kXqmRm7l53xQlKr/dMli\nNmxhZjdZgVjG4me1Ntn779SIkRjbdkAulYiYO6+N2ZIjO2IxHT0uTJuQQjsATFxQ\n5aghMOH+JNMVILf9tcJQzvhO4x9FQVWjYguk3YQ7HmpVFlpyb2lrENyNIqx93hC5\nSWYjMqr8C2VLJLcoTBxTozdDSP76JCsH+mY4b7tLUQKBgQD9tNDdKGYJI+snMzVd\n9zcRgRBkAVpn4SwsDwYRxpPiHjH1kUF9j4mAKslc+pPsF/3frwrWIwj4K0kf3VIc\nxfHlN+NMmd6C64g7tl1rJHcLd0BjIh/DN7DMvg2es1vZ4xHdnuqtR+Nx8oIin/rW\nUSjelaPYTGL9iLmb+fForHgtHQKBgQC5bmbI6yDwtqjDIWfH8w6DBJeSr1H7tEMw\naUpxRLCOiDCUPfAr/5QtAOZ176FMey06mO60g0dmybaiBRB2GM/N2G1FQMPbGXyi\noJLLxb9ZZmLX6Q4x2lfTj2J2tiMv5PgPnn97FB2Pcqm8stLyk60BCWWFrYFFWnvr\nV0uO/rY0wwKBgQDrp6ph4oZ0cwKX1L77WwexoJpi6cbZupPXENVoaXUvkTCCkrus\nL0le3V9QmAgSQm6z+Nkt8jkAmuQ/TspYo5x+dx0QJ9RA8xoFrOy0+pgA9HHAIxAx\numbkppvsD1l/16TeoCAHeEDRtJogI01RCO3XYlNgNAO2z+rn8I/F1H2EGQKBgGU/\nas/50pqcobkp3EjI5fuT3k8xe0o8OxOL6iG+p8irhBrtVt4vRvDrtOpgVWo1N5Tv\nPCdEJxBww0/kBAD3uz9iFQfjPQ289Ni3ZG/vIXPm+8F4d0+xMJNLjy/Sc5QLKYcd\nu+2wJhPVP+jQm23oRGZ0gwJiolsD9PWjTJZfbY2RAoGAYr0fSbJwAo5+QRHn7w/K\nRY+YzbRNVYTaFbNvC9V/SZGWMi9hEEvysAPPGglbRvner6dC6e0iyQD5CodP/IVz\nE/c5OmRWM7dEe2SAn8QJ9Hd2LU0MJR7v67iq8pMNQRgwFziBt8CvOpNwRcOTs4Fm\nA8upbmlmR0YC/sJ30vTgOcw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "srore-service@turing-energy-315118.iam.gserviceaccount.com",
+  "client_id": "115173470117239097127",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/srore-service%40turing-energy-315118.iam.gserviceaccount.com"
+}

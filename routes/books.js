@@ -11,10 +11,10 @@ const booksRouter = Router();
 
 booksRouter.get("/", async(req, res) => {
   try {
-    const { maxResults = 20, sortBy = "book_id", startIndex = 0 } = req.query;
-    const booksList = await books.getBooksList({ maxResults, sortBy, startIndex });
+    const { maxResults = 20, sortBy = "id", startIndex = 0 } = req.query;
+    const result = await books.getBooksList({ maxResults, sortBy, startIndex });
 
-    res.status(200).json({ books: booksList });
+    res.status(200).json({ ...result });
   } catch(e) {
     res.status(500).json({ msg: e.message || "Internet server error" }); 
   }
@@ -33,7 +33,20 @@ booksRouter.get("/:bookId", async(req, res) => {
   }
 });
 
-booksRouter.post("/", middleware(schemas.bookPost, "body"), async (req, res) => {
+booksRouter.get("/get-by-category/:categoryTitle", async(req, res) => {
+  try {
+    const { categoryTitle } = req.params
+    const book = await books.getByCategoryTitle(categoryTitle);
+
+    if (!book) return res.status(404).json({ msg: "Book not found" });
+
+    res.status(200).json({ ...book });
+  } catch(e) {
+    res.status(500).json({ msg: e.message || "Internet server error" }); 
+  }
+});
+
+booksRouter.post("/create-book", middleware(schemas.bookPost, "body"), async (req, res) => {
   try {
     const {
       title,

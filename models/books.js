@@ -33,57 +33,33 @@ const model = {
 
     return !!book;
   },
-  getBooksList: async ({ maxResults = 20, sortBy = "book_id", startIndex = 0 }) => {
+  getBooksList: async ({ maxResults = 20, sortBy = "id", startIndex = 0 }) => {
+    const counter = await DB("Books").count();
     const books = await DB("Books")
-    .select("Books.*", "Categories.title as categoryTitle", "Authors.name as authorName")
-    .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.book_id")
-    .leftJoin("Categories", "Books_Categories.category_id", "Categories.category_id")
-    .leftJoin("Books_Authors", "Books_Authors.book_id", "Books.book_id")
-    .leftJoin("Authors", "Books_Authors.author_id", "Authors.author_id")
     .limit(maxResults <= 100 ? maxResults : 100)
     .offset(startIndex)
     .orderBy(sortBy);
 
-    const formattedBooksObj = {};
+    return { books: books, counter };
+  },
+  getByCategoryTitle: async categoryTitle => {
+    const category = await categoriesModel.getCategoryByTitle(categoryTitle);
 
-    books.forEach(book => {
-      if (book.book_id in formattedBooksObj) {
-        return formattedBooksObj[book.book_id].push(book);
-      } 
-      formattedBooksObj[book.book_id] = [book];
-    });
-
-    const formattedBooksList = Object.keys(formattedBooksObj).map(key => formattedBooksObj[key]);
-
-    
-
-    return formattedBooksList.map(book => book.reduce((memo, categoryEntry) => {
-      if (!memo.title){
-        memo = {...categoryEntry};
-      } 
-      if (!memo.categories) {
-        memo.categories = [];
-      }
-      if (!memo.authors) {
-        memo.authors = [];
-      }
-      if (!memo.categories.includes(categoryEntry.categoryTitle) && categoryEntry.categoryTitle) {
-        memo.categories.push(categoryEntry.categoryTitle);
-      }
-      if (!memo.authors.includes(categoryEntry.authorName) && categoryEntry.authorName) {
-        memo.authors.push(categoryEntry.authorName);
-      }
-      return memo;
-    }, {}));
+    const books = await DB("Books")
+    .select("Books.*")
+    .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.id")
+    .where("Books_Categories.category_id", category.id);
+  
+    return { books: books, counter: books.length };
   },
   getBookById: async bookId => {
     const book = await DB("Books")
     .select("Books.*", "Categories.title as categoryTitle", "Authors.name as authorName")
-    .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.book_id")
-    .leftJoin("Categories", "Books_Categories.category_id", "Categories.category_id")
-    .leftJoin("Books_Authors", "Books_Authors.book_id", "Books.book_id")
-    .leftJoin("Authors", "Books_Authors.author_id", "Authors.author_id")
-    .where("Books.book_id", bookId);
+    .leftJoin("Books_Categories", "Books_Categories.book_id", "Books.id")
+    .leftJoin("Categories", "Books_Categories.category_id", "Categories.id")
+    .leftJoin("Books_Authors", "Books_Authors.book_id", "Books.id")
+    .leftJoin("Authors", "Books_Authors.author_id", "Authors.id")
+    .where("Books.id", bookId);
 
     return book.reduce((memo, categoryEntry) => {
       if (!memo.title){

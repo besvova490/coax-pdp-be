@@ -6,6 +6,10 @@ const authRouter = require("./routes/auth");
 const booksRouter = require("./routes/books");
 const categoriesRouter = require("./routes/categories");
 const authorsRouter = require("./routes/author");
+const filesRouter = require("./routes/uploadImages");
+
+//middleware
+const multerMid = require("./middleware/upload");
 
 require("dotenv").config()
 
@@ -16,11 +20,13 @@ app.use(cors({
   origin: "*"
 }));
 app.use(express.json());
-
+app.use(express.raw({ type: "image/jpeg" }))
+app.use(multerMid.single("body"));
 app.use("/auth", authRouter);
 app.use("/books", booksRouter);
 app.use("/categories", categoriesRouter);
 app.use("/authors", authorsRouter);
+app.use("/images", filesRouter);
 
 app.use((error, req, res, next) => {
   if (res.headerSent) return next(error);
