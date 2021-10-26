@@ -11,14 +11,10 @@ const schemas = {
     .equal(Joi.ref("password"))
     .required()
     .messages({ "any.only": "confirmPassword does not match" }),
-    authTokenGoogle: Joi.string().trim(),
-    authTokenFacebook: Joi.string().trim(),
   }).or("password", "authTokenGoogle", "authTokenFacebook"),
   loginPost: Joi.object({
     email: Joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }).required(),
     password: Joi.string(),
-    authTokenGoogle: Joi.string(),
-    authTokenFacebook: Joi.string(),
   }).or("password", "authTokenGoogle", "authTokenFacebook"),
 };
 

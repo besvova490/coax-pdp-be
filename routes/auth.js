@@ -1,6 +1,8 @@
+const axios = require("axios");
 const { Router } = require("express");
 const bcrypt = require("bcrypt");
 const JWT = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library")
 
 const DB = require("../services/db");
 
@@ -11,17 +13,19 @@ const authRouter = Router();
 
 require("dotenv").config();
 
+const googleClient = new OAuth2Client(process.env.EXPRESS_APP_CLIENT_ID)
+
 
 authRouter.post("/login/", middleware(schemas.loginPost, "body"), async (req, res) => {
   try {
-    const { email, password, authTokenGoogle, authTokenFacebook } = req.body;
+    const { email, password } = req.body;
     const user = await DB("Users").select().first().where({
       email,
     });
-
+    
     if (!user) return res.status(404).json({ email: "User not found" });
-    else if (password && !bcrypt.compareSync(password, user.password)) return res.status(403).json({ password: "invalid password" });
-    else if (!password && !authTokenGoogle && !authTokenFacebook) return res.status(403).json({ email: "invalid password or user auth tokens", password: "invalid password or user auth tokens" });
+    else if (!password || !user.password) return res.status(403).json({ password: "Invalid password" });
+    else if (!bcrypt.compareSync(password, user.password)) return res.status(403).json({ password: "Invalid password" });
   
     const accessToken = JWT.sign(
       { id: user.user_id, email: user.email },
@@ -38,25 +42,153 @@ authRouter.post("/login/", middleware(schemas.loginPost, "body"), async (req, re
   }
 });
 
+authRouter.post("/login/facebook", async (req, res) => {
+  try {
+    const { token }  = req.body;
+
+    const resp = await axios.get(`https://graph.facebook.com/me?access_token=${token}&fields=id,email,first_name,last_name,picture`);
+    const { email } = resp.data;
+    const user = await DB("Users").select().first().where({
+      email,
+    });
+
+    if (!user) return res.status(404).json({ email: "User not found" });
+
+    const accessToken = JWT.sign(
+      { id: user.user_id, email: user.email },
+      process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+      { expiresIn: 1800 });
+    const refreshToken = JWT.sign(
+      { id: user.user_id, email: user.email },
+      process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+      { expiresIn: 86400 });
+  
+    res.status(200).json({ accessToken, refreshToken });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
+});
+
+authRouter.post("/login/google/", async (req, res) => {
+  try {
+    const { token }  = req.body;
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.EXPRESS_APP_CLIENT_ID
+    });
+
+  const { email } = ticket.getPayload();
+
+  const user = await DB("Users").select().first().where({ email: email });
+
+  if (!user) return res.status(404).json({ msg: "User not found" });
+
+  const accessToken = JWT.sign(
+    { id: user.user_id, email: user.email },
+    process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+    { expiresIn: 1800 });
+  const refreshToken = JWT.sign(
+    { id: user.user_id, email: user.email },
+    process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+    { expiresIn: 86400 });
+
+  res.status(200).json({ accessToken, refreshToken });
+  } catch (e) {
+    res.status(500).json({ msg: e });
+  }
+});
+
+authRouter.post("/register/google/", async (req, res) => {
+  try {
+    const { token }  = req.body;
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.EXPRESS_APP_CLIENT_ID
+    });
+
+  const { name, email, picture } = ticket.getPayload();
+
+  const ifEmailExist = await DB("Users").select().first().where({ email: email });
+
+  if (ifEmailExist) return res.status(400).json({ msg: `User with such email '${email}' already exist` });
+
+  const [firstName = "", lastName = ""] = name.split(" ");
+  
+  const [newUser] = await DB("Users").insert({
+    email,
+    firstName,
+    lastName,
+    avatar: picture,
+  }).returning("*");
+
+  const accessToken = JWT.sign(
+    { id: newUser.user_id, email: newUser.email },
+    process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+    { expiresIn: 1800 });
+  const refreshToken = JWT.sign(
+    { id: newUser.user_id, email: newUser.email },
+    process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+    { expiresIn: 86400 });
+
+  res.status(201).json({ accessToken, refreshToken });
+  } catch (e) {
+    res.status(500).json({ msg: e });
+  }
+});
+
+authRouter.post("/register/facebook/", async (req, res) => {
+  try {
+    const { token }  = req.body;
+
+    const resp = await axios.get(`https://graph.facebook.com/me?access_token=${token}&fields=id,email,first_name,last_name,picture`);
+    const { email, first_name: firstName, last_name: lastName, picture } = resp.data;
+    const avatar = picture.data.url;
+
+    const ifEmailExist = await DB("Users").select().first().where({ email: email });
+  
+    if (ifEmailExist) return res.status(400).json({ msg: `User with such email '${email}' already exist` });
+
+
+    const [newUser] = await DB("Users").insert({
+      email,
+      firstName,
+      lastName,
+      avatar,
+    }).returning("*");
+
+    const accessToken = JWT.sign(
+      { id: newUser.user_id, email: newUser.email },
+      process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+      { expiresIn: 1800 });
+    const refreshToken = JWT.sign(
+      { id: newUser.user_id, email: newUser.email },
+      process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+      { expiresIn: 86400 });
+  
+      res.status(201).json({ accessToken, refreshToken });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ msg: e });
+  }
+});
+
 authRouter.post("/register/", middleware(schemas.registerPost, "body"), async (req, res) => {
   try {
-    const { email, password, firstName, lastName, avatar, authTokenGoogle, authTokenFacebook } = req.body;
+    const { email, password, firstName, lastName, avatar } = req.body;
 
     const ifEmailExist = await DB("Users").select().first().where({ email: email });
   
     if (ifEmailExist) return res.status(400).json({ msg: `User with such email '${email}' already exist` });
     
-    const newUser = await DB("Users").insert({
+    const [newUser] = await DB("Users").insert({
       email,
       firstName,
       lastName,
       avatar,
-      authTokenGoogle,
-      authTokenFacebook,
       password: bcrypt.hashSync(password, 10),
     }).returning("*");
   
-    res.status(201).json({ ...newUser });
+    res.status(201).json({ id: newUser.id });
   } catch(e) {
     res.status(500).json({ msg: e.message || "Internet server error" });
   }
@@ -121,12 +253,12 @@ authRouter.get("/profile", async (req, res) => {
     const accessToken = authorization.split(" ")[1];
     
     JWT.verify(accessToken, process.env.EXPRESS_APP_JWT_ACCESS_SECRET, async (e, userObj) => {
-      if (e || !userObj) return res.status(403).json({ msg: e });
+      if (e || !userObj || !userObj.id) return res.status(403).json({ msg: e });
 
       const user = await DB("Users").where("user_id", userObj.id).first();
 
       res.status(200).json({
-        user_id: user.id,
+        userId: user.user_id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -140,6 +272,18 @@ authRouter.get("/profile", async (req, res) => {
   } catch (e) {
     res.status(500).json({ msg: e });
   }
+});
+
+authRouter.delete("/delete", async (req, res) => {
+  const { email } = req.body;
+
+  const user = await DB("Users").where("email", email).first();
+
+  if (!user) return res.status(400).json({ msg: `User with such email '${email}' already exist` });
+
+  await DB("Users").delete().where("email", email);
+
+  res.sendStatus(204);
 });
 
 module.exports = authRouter;

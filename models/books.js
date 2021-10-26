@@ -42,6 +42,7 @@ const model = {
 
     return { books: books, counter };
   },
+
   getByCategoryTitle: async categoryTitle => {
     const category = await categoriesModel.getCategoryByTitle(categoryTitle);
 

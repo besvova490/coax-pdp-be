@@ -7,9 +7,11 @@ const booksRouter = require("./routes/books");
 const categoriesRouter = require("./routes/categories");
 const authorsRouter = require("./routes/author");
 const filesRouter = require("./routes/uploadImages");
+const wishListRouter = require("./routes/wishList");
 
 //middleware
 const multerMid = require("./middleware/upload");
+const authMiddleware = require("./middleware/protect");
 
 require("dotenv").config()
 
@@ -27,6 +29,11 @@ app.use("/books", booksRouter);
 app.use("/categories", categoriesRouter);
 app.use("/authors", authorsRouter);
 app.use("/images", filesRouter);
+app.use("/wish-list", authMiddleware, wishListRouter);
+
+app.use("*", (req, res) => {
+  res.sendStatus(404);
+});
 
 app.use((error, req, res, next) => {
   if (res.headerSent) return next(error);
