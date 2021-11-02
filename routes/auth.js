@@ -69,6 +69,51 @@ authRouter.post("/login/facebook", async (req, res) => {
   }
 });
 
+authRouter.post("/login/git-hub", async (req, res) => {
+  try {
+    const { code }  = req.body;
+
+    const data = {
+      code,
+      client_id: process.env.EXPRESS_APP_GIT_HUB_CLIENT,
+      client_secret: process.env.NEXT_PUBLIC_GIT_HUB_SECRET,
+      redirect_url: "http://localhost:3000/"
+    };
+
+    const resp = await axios.post("https://github.com/login/oauth/access_token", data);
+    const params = new URLSearchParams(resp.data);
+    const access_token = params.get("access_token");
+
+    const respUser = await axios("https://api.github.com/user/emails", {
+      method: "GET",
+      headers: {
+        Authorization: `token ${access_token}`,
+      },
+    });
+
+    const { email } = respUser.data[0];
+
+    const user = await DB("Users").select().first().where({
+      email,
+    });
+
+    if (!user) return res.status(404).json({ email: "User not found" });
+
+    const accessToken = JWT.sign(
+      { id: user.user_id, email: user.email },
+      process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+      { expiresIn: 1800 });
+    const refreshToken = JWT.sign(
+      { id: user.user_id, email: user.email },
+      process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+      { expiresIn: 86400 });
+  
+    res.status(200).json({ accessToken, refreshToken });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
+  }
+});
+
 authRouter.post("/login/google/", async (req, res) => {
   try {
     const { token }  = req.body;
@@ -169,6 +214,70 @@ authRouter.post("/register/facebook/", async (req, res) => {
   } catch (e) {
     console.log(e);
     res.status(500).json({ msg: e });
+  }
+});
+
+authRouter.post("/register/git-hub", async (req, res) => {
+  try {
+    const { code }  = req.body;
+
+    const data = {
+      code,
+      client_id: process.env.EXPRESS_APP_GIT_HUB_CLIENT,
+      client_secret: process.env.EXPRESS_APP_GIT_HUB_SECRET,
+      redirect_url: process.env.EXPRESS_APP_FE_URL
+    };
+
+    const resp = await axios.post("https://github.com/login/oauth/access_token", data);
+    const params = new URLSearchParams(resp.data);
+    const access_token = params.get("access_token");
+
+    const respSimpleUser = await axios("https://api.github.com/user", {
+      method: "GET",
+      headers: {
+        Authorization: `token ${access_token}`,
+      },
+    });
+
+    const { login } = respSimpleUser.data;
+
+    const respFullUser = await axios(`https://api.github.com/users/${login}`, {
+      method: "GET",
+      headers: {
+        Authorization: `token ${access_token}`,
+      },
+    });
+
+    const { email, login: firstName, avatar_url: avatar } = respFullUser.data;
+
+    if (!email) {
+      return res.status(400).json({ msg: "not enougth information" });
+    }
+
+    const ifEmailExist = await DB("Users").select().first().where({ email: email });
+  
+    if (ifEmailExist) return res.status(400).json({ msg: `User with such email '${email}' already exist` });
+
+
+    const [newUser] = await DB("Users").insert({
+      email,
+      firstName,
+      lastName: "",
+      avatar,
+    }).returning("*");
+
+    const accessToken = JWT.sign(
+      { id: newUser.user_id, email: newUser.email },
+      process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
+      { expiresIn: 1800 });
+    const refreshToken = JWT.sign(
+      { id: newUser.user_id, email: newUser.email },
+      process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
+      { expiresIn: 86400 });
+  
+      res.status(201).json({ accessToken, refreshToken });
+  } catch (e) {
+    res.status(500).json({ msg: e.message || "Internet server error" });
   }
 });
 

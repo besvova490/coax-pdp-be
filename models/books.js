@@ -38,7 +38,7 @@ const model = {
     const books = await DB("Books")
     .limit(maxResults <= 100 ? maxResults : 100)
     .offset(startIndex)
-    .orderBy(sortBy);
+    .orderBy(sortBy, "desc");
 
     return { books: books, counter };
   },
