@@ -10,8 +10,8 @@ const authorsRouter = Router();
 
 authorsRouter.get("/", async (req, res) => {
   try {
-    const { maxResults, sortBy, startIndex } = req.query;
-    const authorsList = await authors.getAuthorsList({ maxResults, sortBy, startIndex });
+    const { maxResults, sortBy, startIndex, withoutPagination } = req.query;
+    const authorsList = await authors.getAuthorsList({ maxResults, sortBy, startIndex, withoutPagination });
 
     res.status(200).json({ authorsList });
   } catch (e) {

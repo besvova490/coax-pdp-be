@@ -19,10 +19,11 @@ const app = express();
 
 
 app.use(cors({
-  origin: "*"
+  origin: "*",
 }));
 app.use(express.json());
 app.use(express.raw({ type: "image/jpeg" }))
+app.use(express.raw({ type: "image/png" }))
 app.use(multerMid.single("body"));
 app.use("/auth", authRouter);
 app.use("/books", booksRouter);

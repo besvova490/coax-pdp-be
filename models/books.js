@@ -10,14 +10,14 @@ const model = {
     if (categories) {
       const categoriesList = await categoriesModel.getCategoryByTitlesList(categories);
       Promise.all(categoriesList.map(async (category) => {
-        return DB("Books_Categories").insert({ book_id: book.book_id, category_id: category.category_id }).returning("*");
+        return DB("Books_Categories").insert({ book_id: book.id, category_id: category.id }).returning("*");
       }));
     }
 
     if (authors) {
       const authorsList = await authorsModel.getAuthorsByName(authors);
       Promise.all(authorsList.map(async (author) => {
-        return DB("Books_Authors").insert({ book_id: book.book_id, author_id: author.author_id }).returning("*");
+        return DB("Books_Authors").insert({ book_id: book.id, author_id: author.id }).returning("*");
       }));
     }
     
@@ -29,7 +29,7 @@ const model = {
     return result;
   },
   checkIfBookExist: async bookId => {
-    const book = await DB("Books").select().first().where({ book_id: bookId });
+    const book = await DB("Books").select().first().where({ id: bookId });
 
     return !!book;
   },
@@ -99,10 +99,10 @@ const model = {
       const oldCategories = allBookCategories.filter(category => !categoriesList.some(item => category.category_id === item.category_id));
       const newCategories = categoriesList.filter(category => !allBookCategories.some(item => category.category_id === item.category_id));
 
-      await DB("Books_Categories").delete().whereIn("Books_Categories_id", oldCategories.map(item => item.Books_Categories_id));
+      await DB("Books_Categories").delete().whereIn("category_id", oldCategories.map(item => item.category_id));
     
       Promise.all(newCategories.map(async (category) => {
-        return DB("Books_Categories").insert({ book_id: bookFields.id, category_id: category.category_id }).returning("*");
+        return DB("Books_Categories").insert({ book_id: bookFields.id, category_id: category.id }).returning("*");
       }));
     }
 
@@ -113,26 +113,43 @@ const model = {
       const oldAuthors = allAuthorBooks.filter(author => !authorsList.some(item => author.author_id === item.author_id));
       const newAuthors = authorsList.filter(author => !allAuthorBooks.some(item => author.author_id === item.author_id));
 
-      await DB("Books_Authors").delete().whereIn("book_author_id", oldAuthors.map(item => item.book_author_id));
+      await DB("Books_Authors").delete().whereIn("author_id", oldAuthors.map(item => item.author_id));
 
       Promise.all(newAuthors.map(async (author) => {
-        return DB("Books_Authors").insert({ book_id: bookFields.id, author_id: author.author_id }).returning("*");
+        return DB("Books_Authors").insert({ book_id: bookFields.id, author_id: author.id }).returning("*");
       }));
     }
 
     if (Object.keys(filteredFields).length) {
       const [result] = await DB("Books").update({
         ...filteredFields
-      }).where({ book_id: bookFields.id }).returning("*");
+      }).where({ id: bookFields.id }).returning("*");
   
       return result;
     }
   },
+  addBookToUser: async (bookId, userId) => {
+    const [result] = await DB("User_Books").insert({ book_id: bookId, user_id: userId }).returning("*");
+
+    return result;
+  },
+
+  getUserBooks: async userId => {
+    const { count } = await DB("User_Books").count().first();
+    const booksList = await DB("User_Books")
+    .select("Books.*")
+    .leftJoin("Books", "User_Books.book_id", "Books.id")
+    .where("User_Books.user_id", userId)
+    .whereNot("Books.id", null);
+
+    return { booksList, count };
+  },
+
   deleteBook: async bookId => {
-    const allBookCategories = await DB("Books_Categories").select().where({ book_id: bookId });
+    const allBookCategories = await DB("Books_Categories").select().where({ id: bookId });
     await DB("Books_Categories").delete().whereIn("Books_Categories_id", allBookCategories.map(item => item.Books_Categories_id));
 
-    const [result] = await DB("Books").delete().where({ book_id: bookId }).returning("*");
+    const [result] = await DB("Books").delete().where({ id: bookId }).returning("*");
 
     return result;
   },

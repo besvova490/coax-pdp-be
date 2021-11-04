@@ -1,4 +1,5 @@
 const { Router } = require("express");
+const JWT = require("jsonwebtoken");
 
 const DB = require("../services/db");
 
@@ -19,6 +20,24 @@ booksRouter.get("/", async(req, res) => {
     res.status(500).json({ msg: e.message || "Internet server error" }); 
   }
 });
+
+booksRouter.get("/my-books", async (req, res) => {
+  try {
+    const authToken = req.headers["authorization"];
+    const token = authToken && authToken.split(" ")[1];
+
+    JWT.verify(token, process.env.EXPRESS_APP_JWT_ACCESS_SECRET, async (e, user) => {
+      const book = await books.getUserBooks(+user.id);
+  
+      if (!book) return res.status(404).json({ msg: "Book not found" });
+  
+      res.status(200).json({ ...book });
+    });
+  } catch(e) {
+    res.status(500).json({ msg: e.message || "Internet server error" }); 
+  }
+});
+
 
 booksRouter.get("/:bookId", async(req, res) => {
   try {
@@ -47,6 +66,7 @@ booksRouter.get("/get-by-category/:categoryTitle", async(req, res) => {
 });
 
 booksRouter.post("/create-book", middleware(schemas.bookPost, "body"), async (req, res) => {
+
   try {
     const {
       title,
@@ -54,34 +74,39 @@ booksRouter.post("/create-book", middleware(schemas.bookPost, "body"), async (re
       amount,
       printType,
       shortDescription,
-      publisher,
       publishedDate,
       authors,
       categories,
       thumbnailLink,
       previewLink,
-      language,
       discount,
       pageCount,
     } = req.body;
 
     const isBookExist = await DB("Books").select().first().where({ title });
-    if (isBookExist) return res.status(400).json({ msg: `Book with such title '${title} already exist'` })
+    if (isBookExist) return res.status(400).json({ msg: `Book with such title '${title} already exist'` });
 
-    const book = books.createBook({
+    console.log(authors, categories);
+
+    const book = await books.createBook({
       title,
       description,
-      amount,
+      amount: +amount,
       printType,
       shortDescription,
-      publisher,
       publishedDate,
       thumbnailLink,
       previewLink,
-      language,
       discount,
-      pageCount,
-    }, { authors, categories});
+      pageCount: +pageCount,
+    }, { authors, categories });
+
+    const authToken = req.headers["authorization"];
+    const token = authToken && authToken.split(" ")[1];
+
+    JWT.verify(token, process.env.EXPRESS_APP_JWT_ACCESS_SECRET, async (e, user) => {
+      await books.addBookToUser(book.id, user.id);
+    });
 
     res.status(202).json({ msg: "New book has been created", book });
   } catch (e) {

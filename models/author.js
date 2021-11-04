@@ -8,9 +8,14 @@ const model = {
 
     return author;
   },
-  getAuthorsList: async ({ maxResults = 20, sortBy = "author_id", startIndex = 0 }) => {
+  getAuthorsList: async ({ maxResults = 20, sortBy = "id", startIndex = 0, withoutPagination }) => {
+    if (withoutPagination) {
+      return await DB("Authors")
+      .select("id", "name");
+    }
+
     return await DB("Authors")
-    .select("*", DB("Books_Authors").whereRaw("?? = ??", ["Authors.author_id", "author_id"]).count("*").as("booksCounter"))
+    .select("*", DB("Books_Authors").whereRaw("?? = ??", ["Authors.id", "author_id"]).count("*").as("booksCounter"))
     .limit(maxResults <= 100 ? maxResults : 100)
     .offset(startIndex)
     .orderBy(sortBy);

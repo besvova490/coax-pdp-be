@@ -13,7 +13,6 @@ const schemas = {
     authors: Joi.array().items(Joi.string()),
     thumbnailLink: Joi.string().trim(),
     previewLink: Joi.string().trim(),
-    language: Joi.string().trim(),
     discount: Joi.number(),
     pageCount: Joi.number(),
     averageRating: Joi.number(),

@@ -102,7 +102,7 @@ authRouter.post("/login/git-hub", async (req, res) => {
     const accessToken = JWT.sign(
       { id: user.user_id, email: user.email },
       process.env.EXPRESS_APP_JWT_ACCESS_SECRET,
-      { expiresIn: 1800 });
+      { expiresIn: 800 });
     const refreshToken = JWT.sign(
       { id: user.user_id, email: user.email },
       process.env.EXPRESS_APP_JWT_REFRESH_SECRET,
@@ -379,6 +379,7 @@ authRouter.get("/profile", async (req, res) => {
       });
     });
   } catch (e) {
+    console.log(e);
     res.status(500).json({ msg: e });
   }
 });

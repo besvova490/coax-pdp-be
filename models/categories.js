@@ -40,7 +40,7 @@ const model = {
     return await DB("Categories").select("*", DB("Books_Categories").whereRaw("?? = ??", ["Categories.id", "category_id"]).count("*").as("booksCounter")).first().where({ title });
   },
   getCategoryByTitlesList: async titlesList => {
-    return await DB("Categories").select("*").whereIn("title", titlesList);
+    return await DB("Categories").select("*").whereIn("title", [titlesList]);
   },
   deleteCategory: async categoryId => {
     const category = await DB("Categories").select("*").first().where({ id: categoryId });
